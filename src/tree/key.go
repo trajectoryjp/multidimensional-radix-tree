@@ -1,9 +1,11 @@
 package tree
 
+/*
 type Key struct {
 	zoomSetLevel int
 	indexs       Indexs // 次元数はtableと一致していること。不一致の場合の動作保証はしない
 }
+*/
 
 /*
 func (key *Key) Parent(zoomSetLevel int, zoomSetTable ZoomSetTable) (parent *Key, suffix Indexs) {
@@ -18,6 +20,7 @@ func (key *Key) Parent(zoomSetLevel int, zoomSetTable ZoomSetTable) (parent *Key
 }
 */
 
+/*
 // keyをzoomDiffTableだけシフトする
 func (key *Key) shiftIndexToNext(zoomSetTable ZoomSetTable) (prefix, suffix Indexs) {
 	prefix = make(Indexs, len(key.indexs))
@@ -31,6 +34,7 @@ func (key *Key) shiftIndexToNext(zoomSetTable ZoomSetTable) (prefix, suffix Inde
 	}
 	return prefix, suffix
 }
+*/
 
 type Indexs []int64
 

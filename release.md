@@ -1,5 +1,3 @@
-# trjxTransfer release note
+# multidementional-radix-tree release note
 
-### v1.0.0
-- -helpコマンドパラメータ追加
-- -tcpコマンドパラメータ追加
+### v0.0.0

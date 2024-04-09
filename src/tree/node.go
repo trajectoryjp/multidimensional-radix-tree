@@ -5,47 +5,44 @@ import (
 )
 
 type Node struct {
-	zoomSetLevel int
+	zoomSetLevel ZoomSetLevel
 	next         []*Node
 	value        interface{}
 }
 
-func createNode(zoomSetLevel int) *Node {
+func createNode(zoomSetLevel ZoomSetLevel) *Node {
 	return &Node{
 		zoomSetLevel: zoomSetLevel,
 	}
 }
 
-func (nd *Node) append(suffixKey *SuffixKey, value interface{}) {
-	if suffixKey.IsEnd() {
+func (nd *Node) append(key *KeyInfo, value interface{}) {
+	if key.ZoomSetLevel == nd.zoomSetLevel {
 		nd.value = value // over write
 		return
 
 	} else {
 		if nd.next == nil {
 			var branchNum int
-			if suffixKey.zoomSetTable == nil {
+			if key.zoomSetTable == nil {
 				//　デフォルト1次元2分木
 				branchNum = 2
 
-			} else if suffixKey.dimension == 0 {
+			} else if key.dimension == 0 {
 				//　デフォルト1次元2分木
 				branchNum = 2
 
-			} else if len(suffixKey.zoomSetTable) == 0 || suffixKey.zoomSetLevel >= len(suffixKey.zoomSetTable) {
+			} else if len(key.zoomSetTable) == 0 || int(key.ZoomSetLevel) >= len(key.zoomSetTable) {
 				//　デフォルト2分木
-				if pow := len(suffixKey.zoomSetTable[0]); pow == 0 {
+				if pow := len(key.zoomSetTable[0]); pow == 0 {
 					branchNum = 2
 				} else {
 					branchNum = int(math.Pow(2, float64(pow)))
 				}
 
 			} else {
-				//for zs := range suffixKey.zoomSetTable[suffixKey.zoomSetLevel] {
-				//	branchNum += int(math.Pow(2, float64(zs)))
-				//}
-				for dim := 0; dim < suffixKey.dimension; dim++ {
-					zdiff := suffixKey.zoomDiff(dim)
+				for dim := 0; dim < key.dimension; dim++ {
+					zdiff := key.zoomDiff(nd.zoomSetLevel, dim)
 					branchNum += int(math.Pow(2, float64(zdiff)))
 				}
 			}
@@ -57,32 +54,21 @@ func (nd *Node) append(suffixKey *SuffixKey, value interface{}) {
 		// 例
 		//   x=01 00 11 10  zoomSetTable=2,2,2
 		//   NodeのzoomLevel=1の場合は11を取り出す。11=3がブランチ番号
-		/*
-			branchNumbers := suffixKey.shift()
-			var branchIndex int64
-			for dim := 0; dim < suffixKey.dimension; dim++ {
-				branchIndex += branchNumbers[dim]
-				digit := suffixKey.zoomSetTable[suffixKey.zoomSetLevel][dim]
-				branchIndex = branchIndex << digit
-			}
-		*/
 
-		buranchPath, _ := suffixKey.branchPath()
+		buranchPath := key.BranchPath(nd.zoomSetLevel)
 		if nd.next[buranchPath] == nil {
-			nd.next[buranchPath] = createNode(suffixKey.zoomSetLevel + 1)
+			nd.next[buranchPath] = createNode(nd.zoomSetLevel + 1)
 		}
-
-		suffixKey.Shift()
-		nd.next[buranchPath].append(suffixKey, value)
-
+		nd.next[buranchPath].append(key, value)
 	}
 }
 
-func (nd *Node) searchPrefix(suffixKey *SuffixKey, prefixes []int64, chop bool) Records {
+func (nd *Node) searchKey(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
 
 	if nd.value != nil {
+
 		record := &Record{
-			indexs: prefixes,
+			indexs: nodeKeys,
 			value:  nd.value,
 		}
 
@@ -90,52 +76,51 @@ func (nd *Node) searchPrefix(suffixKey *SuffixKey, prefixes []int64, chop bool) 
 			return Records{record}
 
 		} else {
-			r := nd.searchPrefixToChild(suffixKey, prefixes, chop)
+			r := nd.searchPrefixToChild(key, chop, nodeKeys)
 			return append(r, record)
 		}
 
 	} else {
-		return nd.searchPrefixToChild(suffixKey, prefixes, chop)
+		return nd.searchPrefixToChild(key, chop, nodeKeys)
 	}
 
 }
 
-func (nd *Node) searchPrefixToChild(suffixKey *SuffixKey, prefixes []int64, chop bool) Records {
-	buranchPath, branchNumbers := suffixKey.branchPath()
-	for k, bn := range branchNumbers {
-		prefixes[k] = prefixes[k]<<suffixKey.zoomDiff(k) + bn
-	}
+func (nd *Node) searchPrefixToChild(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
 
-	if suffixKey.IsEnd() {
-		// 子（すべてのpathが対象）
-		rr := make(Records, 0)
-		for n := range nd.next {
-			if next := nd.next[n]; next != nil {
-				r := next.searchPrefix(suffixKey, prefixes, chop)
-				if len(r) > 0 {
-					if chop {
-						return r
-					} else {
-						rr = append(rr, r...)
-					}
-				}
-			}
-		}
-		return rr
-
-	} else {
-		//buranchPath, branchNumbers := suffixKey.branchPath()
-		//for k, bn := range branchNumbers {
-		//	prefixes[k] = prefixes[k]<<suffixKey.zoom(k) + bn
-		//}
-
-		if nd.next != nil && nd.next[buranchPath] != nil {
-			suffixKey.Shift()
-			return nd.next[buranchPath].searchPrefix(suffixKey, prefixes, chop)
+	if key.ZoomSetLevel > nd.zoomSetLevel {
+		branchPath := key.BranchPath(nd.zoomSetLevel)
+		next := nd.next[branchPath]
+		if next == nil {
+			return nil
 
 		} else {
-			return nil
+			for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+				zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+				mask := 0b01<<(zd+1) - 1
+				bp := branchPath & mask
+				nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+			}
+			return next.searchKey(key, chop, nodeKeys)
 		}
-	}
 
+	} else {
+		// keyとndは同じZoomSetLevel、もしくはndが大きい（子）のZoomSetLevel
+		records := make(Records, 0)
+		for branchPath, next := range nd.next {
+			if next != nil {
+				for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+					zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+					mask := 0b01<<(zd+1) - 1
+					bp := branchPath & mask
+					nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+				}
+				if r := next.searchKey(key, chop, nodeKeys); len(r) > 0 {
+					records = append(records, r...)
+				}
+			}
+
+		}
+		return records
+	}
 }

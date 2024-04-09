@@ -5,16 +5,17 @@ package tree
 // zoomSetLevel=0は、zoomLevel=0
 
 type ZoomLevel uint8
+type ZoomSetLevel uint8
 type ZoomSet []ZoomLevel
 type ZoomDiffSet []ZoomLevel    // 次元数分要素。0の要素は、1のズームレベルの差。2のべき数。デフォルト1。
 type ZoomSetTable []ZoomDiffSet // keyはzoomSetLevel
 
 // zoomSetLevelとzoomSetLevel+1のズームレベル差（2の冪数）
-func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel, dim int) (diff ZoomLevel) {
+func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel ZoomSetLevel, dim int) (diff ZoomLevel) {
 	if zt == nil {
 		return 1
 
-	} else if zoomSetLevel >= len(zt) {
+	} else if int(zoomSetLevel) >= len(zt) {
 		return 1
 
 	} else {
@@ -23,8 +24,8 @@ func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel, dim int) (diff ZoomLevel) {
 }
 
 // zoomSetLevelのズームレベル（2の冪数）
-func (zt ZoomSetTable) GetZoom(zoomSetLevel, dim int) (zoom ZoomLevel) {
-	for k := 0; k < zoomSetLevel; k++ {
+func (zt ZoomSetTable) GetZoom(zoomSetLevel ZoomSetLevel, dim int) (zoom ZoomLevel) {
+	for k := ZoomSetLevel(0); k <= zoomSetLevel; k++ {
 		zoom += zt.GetZoomDiff(k, dim)
 	}
 	return zoom
@@ -45,21 +46,23 @@ func CreateTree(table ZoomSetTable) *Tree {
 	}
 }
 
-func (tr *Tree) Append(indexs Indexs, zoomSetLevel int, value interface{}) {
-	suffixKey := tr.makeInitSuffixKey(indexs, zoomSetLevel)
-	tr.top.append(suffixKey, value)
+func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value interface{}) {
+	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel)
+	tr.top.append(key, value)
 }
 
-func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel int) bool {
-	suffixKey := tr.makeInitSuffixKey(indexs, zoomSetLevel)
-	indexsArray := tr.top.searchPrefix(suffixKey, make([]int64, suffixKey.dimension), true)
+func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
+	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel)
+	nodeKeys := make(Indexs, len(indexs))
+	indexsArray := tr.top.searchKey(key, true, nodeKeys)
 	return len(indexsArray) > 0
 }
 
+/*
 func (tr *Tree) makeInitSuffixKey(indexs Indexs, zoomSetLevel int) *SuffixKey {
 	return CreateSuffixKey(tr.zoomSetTable, indexs, zoomSetLevel)
 
-	/*
+
 		availableDegits := make(ZoomSet, len(indexs))
 		if tr.zoomSetTable == nil {
 			availableDegits = []ZoomLevel{ZoomLevel(zoomSetLevel)}
@@ -83,5 +86,6 @@ func (tr *Tree) makeInitSuffixKey(indexs Indexs, zoomSetLevel int) *SuffixKey {
 			availableDegits: availableDegits, // suffixの有効桁数
 			suffix:          indexs,
 		}
-	*/
+
 }
+*/
