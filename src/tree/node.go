@@ -32,7 +32,7 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 				//　デフォルト1次元2分木
 				branchNum = 2
 
-			} else if len(key.zoomSetTable) == 0 || int(key.ZoomSetLevel) >= len(key.zoomSetTable) {
+			} else if len(key.zoomSetTable) == 0 || int(nd.zoomSetLevel) >= len(key.zoomSetTable) {
 				//　デフォルト2分木
 				if pow := len(key.zoomSetTable[0]); pow == 0 {
 					branchNum = 2
