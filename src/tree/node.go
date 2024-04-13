@@ -1,9 +1,5 @@
 package tree
 
-import (
-	"math"
-)
-
 type Node struct {
 	zoomSetLevel ZoomSetLevel
 	next         []*Node
@@ -33,17 +29,15 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 				branchNum = 2
 
 			} else if len(key.zoomSetTable) == 0 || int(nd.zoomSetLevel) >= len(key.zoomSetTable) {
-				//　デフォルト2分木
-				if pow := len(key.zoomSetTable[0]); pow == 0 {
-					branchNum = 2
-				} else {
-					branchNum = int(math.Pow(2, float64(pow)))
-				}
+				//　デフォルト2分木 x 次元
+				branchNum = 0b01 << key.dimension
 
 			} else {
 				for dim := 0; dim < key.dimension; dim++ {
 					zdiff := key.zoomDiff(nd.zoomSetLevel, dim)
-					branchNum += int(math.Pow(2, float64(zdiff)))
+					//branchNum += int(math.Pow(2, float64(zdiff)))
+					num := 0b01 << int(zdiff)
+					branchNum += num
 				}
 			}
 			nd.next = make([]*Node, branchNum)

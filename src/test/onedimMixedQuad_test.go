@@ -58,7 +58,7 @@ func TestOneDimMixedQuad(t *testing.T) {
 
 	target5 := tr.Indexs{0b101}     // 21
 	if tree.IsOverlap(target5, 2) { // 2,21が存在しないのでOverlag=flaseが正解
-		t.Error("target6")
+		t.Error("target5")
 	}
 
 	target6 := tr.Indexs{0b111}      // 不正データ（3ビット目は無視） -> 0b11 = 3

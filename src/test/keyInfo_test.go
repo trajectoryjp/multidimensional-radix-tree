@@ -8,7 +8,7 @@ import (
 //　KeyInfo単体試験
 
 func TestKeyInfo(t *testing.T) {
-	// 1次元
+	// 1次元バイナリ
 	sf00 := tr.CreateKeyInfo(nil, tr.Indexs{0b101}, 3)
 	if sf00.BranchPath(0) != 1 {
 		t.Error("sf00-0")
@@ -23,8 +23,9 @@ func TestKeyInfo(t *testing.T) {
 		t.Error("sf00-3")
 	}
 
-	// 2次元
-	sf01 := tr.CreateKeyInfo(nil, tr.Indexs{0b101, 0b001}, 3)
+	// 2次元(1)
+	table := tr.CreateZoomSetTableForBinary2D()
+	sf01 := tr.CreateKeyInfo(table, tr.Indexs{0b101, 0b001}, 3)
 	if v := sf01.BranchPath(0); v != 2 {
 		t.Errorf("sf01-0 v=%v", v)
 	}
@@ -38,9 +39,24 @@ func TestKeyInfo(t *testing.T) {
 		t.Errorf("sf01-3 v=%v", v)
 	}
 
+	// 2次元(2)
+	sf03 := tr.CreateKeyInfo(table, tr.Indexs{0b000, 0b001}, 3)
+	if v := sf03.BranchPath(0); v != 0 {
+		t.Errorf("sf03-0 v=%v", v)
+	}
+	if v := sf03.BranchPath(1); v != 0 {
+		t.Errorf("sf03-1 v=%v", v)
+	}
+	if v := sf03.BranchPath(2); v != 1 {
+		t.Errorf("sf03-2 v=%v", v)
+	}
+	if v := sf03.BranchPath(3); v != -1 {
+		t.Errorf("sf03-3 v=%v", v)
+	}
+
 	// 1次元テーブル
-	table := tr.ZoomSetTable{tr.ZoomDiffSet{2}, tr.ZoomDiffSet{1}, tr.ZoomDiffSet{2}}
-	sf02 := tr.CreateKeyInfo(table, tr.Indexs{0b01010}, 3)
+	table2 := tr.ZoomSetTable{tr.ZoomDiffSet{2}, tr.ZoomDiffSet{1}, tr.ZoomDiffSet{2}}
+	sf02 := tr.CreateKeyInfo(table2, tr.Indexs{0b01010}, 3)
 	if v := sf02.BranchPath(0); v != 1 {
 		t.Errorf("sf02-0 v=%v", v)
 	}
