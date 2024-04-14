@@ -14,12 +14,15 @@ type TreeInterface interface {
 type Tree struct {
 	top          *Node
 	zoomSetTable ZoomSetTable
+
+	zoomSetOddTable ZoomSetOddTable
 }
 
 func CreateTree(table ZoomSetTable) TreeInterface {
 	return &Tree{
-		top:          createNode(0),
-		zoomSetTable: table,
+		top:             createNode(0),
+		zoomSetTable:    table,
+		zoomSetOddTable: createZommSetOddTable(table),
 	}
 }
 
@@ -27,12 +30,12 @@ func CreateTree(table ZoomSetTable) TreeInterface {
 // 処理能力向上のため、次元チェックは行わない。不一致の場合はpanicが発生する。
 // valueはnil以外を設定すること（nilはセルなしと扱われる）
 func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value interface{}) {
-	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel)
+	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	tr.top.append(key, value)
 }
 
 func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
-	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel)
+	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
 	indexsArray := tr.top.searchKey(key, true, nodeKeys)
 	return len(indexsArray) > 0
@@ -47,18 +50,17 @@ func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
 
 type DebugTree struct {
 	Tree
-	exception       func(message string)
-	zoomSetOddTable ZoomSetOddTable
+	exception func(message string)
 }
 
 func CreateDebugTree(table ZoomSetTable, exception func(message string)) TreeInterface {
 	return &DebugTree{
 		Tree: Tree{
-			top:          createNode(0),
-			zoomSetTable: table,
+			top:             createNode(0),
+			zoomSetTable:    table,
+			zoomSetOddTable: createZommSetOddTable(table),
 		},
-		exception:       exception,
-		zoomSetOddTable: createZommSetOddTable(table),
+		exception: exception,
 	}
 }
 

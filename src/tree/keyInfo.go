@@ -10,22 +10,15 @@ type KeyInfo struct { // 親のビットを0にしたキー
 	Indexs       Indexs
 }
 
-func CreateKeyInfo(table ZoomSetTable, indexs Indexs, zoomSetLevel ZoomSetLevel) *KeyInfo {
-	/*
-		zoomSetOddTable := make(ZoomSetOddTable, 0)
-		for zsl := range table {
-			zso := make(ZoomSet, len(indexs))
-			for dim := range indexs {
-				zso[dim] = table.GetZoom(ZoomSetLevel(zsl), dim)
-			}
-			zoomSetOddTable = append(zoomSetOddTable, zso)
-		}
-	*/
+func CreateKeyInfo(table ZoomSetTable, indexs Indexs, zoomSetLevel ZoomSetLevel, zoomOddTable ZoomSetOddTable) *KeyInfo {
+	if zoomOddTable == nil {
+		zoomOddTable = createZommSetOddTable(table)
+	}
 
 	return &KeyInfo{
 		zoomSetTable:    table,
 		dimension:       len(indexs),
-		zoomSetOddTable: createZommSetOddTable(table),
+		zoomSetOddTable: zoomOddTable,
 
 		ZoomSetLevel: zoomSetLevel,
 		Indexs:       indexs,
