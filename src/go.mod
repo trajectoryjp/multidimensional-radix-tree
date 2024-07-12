@@ -1,3 +1,3 @@
-module trajectory-github/multidementional-radix-tree/src
+module github.com/trajectoryjp/multidimensional-radix-tree
 
 go 1.21.3

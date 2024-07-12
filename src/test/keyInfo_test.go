@@ -2,7 +2,8 @@ package test
 
 import (
 	"testing"
-	tr "trajectory-github/multidementional-radix-tree/src/tree"
+
+	tr "github.com/trajectoryjp/multidimensional-radix-tree/tree"
 )
 
 //　KeyInfo単体試験
