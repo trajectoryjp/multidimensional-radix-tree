@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	tr "github.com/trajectoryjp/multidimensional-radix-tree/tree"
+	tr "github.com/trajectoryjp/multidimensional-radix-tree/src/tree"
 )
 
 //　一次元バイナリーツリー

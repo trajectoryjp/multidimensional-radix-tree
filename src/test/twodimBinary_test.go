@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	tr "github.com/trajectoryjp/multidimensional-radix-tree/tree"
+	tr "github.com/trajectoryjp/multidimensional-radix-tree/src/tree"
 )
 
 //　二次元バイナリーツリー
