@@ -33,11 +33,12 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 				branchNum = 0b01 << key.dimension
 
 			} else {
+				branchNum = 1 // RM#3910（分岐数計算誤り）
 				for dim := 0; dim < key.dimension; dim++ {
 					zdiff := key.zoomDiff(nd.zoomSetLevel, dim)
 					//branchNum += int(math.Pow(2, float64(zdiff)))
 					num := 0b01 << int(zdiff)
-					branchNum += num
+					branchNum *= num // RM#3910（分岐数計算誤り）
 				}
 			}
 			nd.next = make([]*Node, branchNum)
@@ -46,14 +47,20 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 		// ブランチ番号判定
 		// 次のZoomSetLevelのプリフィックスを取り出し
 		// 例
+		//   node#0 - node#00 - node#000
+		//                    - node#001
+		//          - node#01 - node#010
+		//                    - node#011
+		//          - node#10 - node#110
+		//                    - node#111
 		//   x=01 00 11 10  zoomSetTable=2,2,2
 		//   NodeのzoomLevel=1の場合は11を取り出す。11=3がブランチ番号
 
-		buranchPath := key.BranchPath(nd.zoomSetLevel)
-		if nd.next[buranchPath] == nil {
-			nd.next[buranchPath] = createNode(nd.zoomSetLevel + 1)
+		branchPath := key.BranchPath(nd.zoomSetLevel)
+		if nd.next[branchPath] == nil {
+			nd.next[branchPath] = createNode(nd.zoomSetLevel + 1)
 		}
-		nd.next[buranchPath].append(key, value)
+		nd.next[branchPath].append(key, value)
 	}
 }
 

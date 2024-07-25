@@ -6,19 +6,19 @@ import "log"
 // helper
 //-------------
 
-func CreateZoomSetTableForBinary1D() ZoomSetTable {
+func Create1DTable() ZoomSetTable {
 	return ZoomSetTable{ZoomDiffSet{1}}
 }
 
-func CreateZoomSetTableForBinary2D() ZoomSetTable {
+func Create2DTable() ZoomSetTable {
 	return ZoomSetTable{ZoomDiffSet{1, 1}}
 }
 
-func CreateZoomSetTableForBinary3D() ZoomSetTable {
+func Create3DTable() ZoomSetTable {
 	return ZoomSetTable{ZoomDiffSet{1, 1, 1}}
 }
 
-func CreateZoomSetTableForQuad() ZoomSetTable {
+func CreateQuadkeyTable() ZoomSetTable {
 	return ZoomSetTable{ZoomDiffSet{2}}
 }
 

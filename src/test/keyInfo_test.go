@@ -25,7 +25,7 @@ func TestKeyInfo(t *testing.T) {
 	}
 
 	// 2次元(1)
-	table := tr.CreateZoomSetTableForBinary2D()
+	table := tr.Create2DTable()
 	sf01 := tr.CreateKeyInfo(table, tr.Indexs{0b101, 0b001}, 3, nil)
 	if v := sf01.BranchPath(0); v != 2 {
 		t.Errorf("sf01-0 v=%v", v)

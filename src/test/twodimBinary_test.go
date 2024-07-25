@@ -13,7 +13,7 @@ func TestTwoDimBinary(t *testing.T) {
 
 	//ZoomSetTable
 	//二次元デフォルトテーブル（バイナリツリー）
-	table := tr.CreateZoomSetTableForBinary2D()
+	table := tr.Create2DTable()
 
 	// 前方一致検索テーブル作成
 	tree := tr.CreateDebugTree(table, exception)
