@@ -76,12 +76,9 @@ func (ki *KeyInfo) BranchPath(zsl ZoomSetLevel) (branch int) {
 
 		lengths := ki.zoomSetOdd(ki.ZoomSetLevel) // 有効桁数
 		for d := 0; d < ki.dimension; d++ {
-			if d > 0 {
-				branch = branch << ki.zoomSetTable.GetZoomDiff(zsl, d-1)
-			}
 			digit := ki.zoomSetTable.GetZoomDiff(zsl, d)
 			n := pickup(ki.Indexs[d], lengths[d], zsbaseSet[d], digit)
-			branch = branch | n
+			branch = branch<<digit | n
 		}
 		return branch
 	}
