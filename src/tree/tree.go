@@ -38,14 +38,14 @@ func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value any) {
 func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
-	indexsArray := tr.top.searchKey(key, true, nodeKeys)
+	indexsArray := tr.top.searchKey(key, true, false, nodeKeys)
 	return len(indexsArray) > 0
 }
 
 func (tr *Tree) GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) Records {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
-	return tr.top.searchKey(key, false, nodeKeys)
+	return tr.top.searchKey(key, false, true, nodeKeys)
 }
 
 // ----------------

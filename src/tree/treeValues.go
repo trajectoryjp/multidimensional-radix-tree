@@ -31,10 +31,11 @@ func (tr *TreeValues) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value any
 	tr.top.append(key, values)
 }
 
+// indexsのノードの値を返す。indexsの親の値は含まない。
 func (tr *TreeValues) GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) (records Records) {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
-	rs := tr.top.searchKey(key, false, nodeKeys)
+	rs := tr.top.searchKey(key, false, false, nodeKeys)
 
 	records = make(Records, 0)
 	for _, r := range rs {

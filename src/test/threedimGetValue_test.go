@@ -34,8 +34,8 @@ func TestTrheeDimGetValue(t *testing.T) {
 	checkValue(t, tree, indexs21, 2, []string{"2-21a", "2-21b"})
 	checkValue(t, tree, indexs22, 2, []string{"2-22"})
 	checkValue(t, tree, indexs23, 2, []string{"2-23"})
-	checkValue(t, tree, indexs11, 2, []string{"1-1"})
-	checkValue(t, tree, indexs12, 2, []string{"1-2"})
+	checkValue(t, tree, indexs11, 1, []string{"1-1"})
+	checkValue(t, tree, indexs12, 1, []string{"1-2"})
 
 }
 
