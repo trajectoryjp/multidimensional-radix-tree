@@ -36,8 +36,13 @@ func checkDigit(v int64, z ZoomLevel) bool {
 }
 
 type Record struct {
+	zoom   ZoomSetLevel // ＃8633
 	indexs Indexs
-	value  interface{}
+	value  any
 }
 
 type Records []*Record
+
+func (r *Record) Get() (Indexs, any) {
+	return r.indexs, r.value
+}

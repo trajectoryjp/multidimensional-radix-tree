@@ -9,6 +9,7 @@ import "fmt"
 type TreeInterface interface {
 	Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value interface{})
 	IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool
+	GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) Records // indexsに一致するnodeの値を返す。indexsの親や子の値は返さない。
 }
 
 type Tree struct {
@@ -29,7 +30,7 @@ func CreateTree(table ZoomSetTable) TreeInterface {
 // indexsの次元はCreateTreeで与えたテーブルの次元数と一致しなければならない
 // 処理能力向上のため、次元チェックは行わない。不一致の場合はpanicが発生する。
 // valueはnil以外を設定すること（nilはセルなしと扱われる）
-func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value interface{}) {
+func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value any) {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	tr.top.append(key, value)
 }
@@ -39,6 +40,12 @@ func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
 	nodeKeys := make(Indexs, len(indexs))
 	indexsArray := tr.top.searchKey(key, true, nodeKeys)
 	return len(indexsArray) > 0
+}
+
+func (tr *Tree) GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) Records {
+	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
+	nodeKeys := make(Indexs, len(indexs))
+	return tr.top.searchKey(key, false, nodeKeys)
 }
 
 // ----------------

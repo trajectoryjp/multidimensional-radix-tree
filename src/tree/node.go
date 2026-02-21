@@ -69,6 +69,7 @@ func (nd *Node) searchKey(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
 	if nd.value != nil {
 
 		record := &Record{
+			zoom:   nd.zoomSetLevel, // ＃8633
 			indexs: nodeKeys,
 			value:  nd.value,
 		}
@@ -91,18 +92,23 @@ func (nd *Node) searchPrefixToChild(key *KeyInfo, chop bool, nodeKeys Indexs) Re
 
 	if key.ZoomSetLevel > nd.zoomSetLevel {
 		branchPath := key.BranchPath(nd.zoomSetLevel)
-		next := nd.next[branchPath]
-		if next == nil {
+		if len(nd.next) == 0 { //#8624
 			return nil
 
 		} else {
-			for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
-				zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
-				mask := 0b01<<(zd+1) - 1
-				bp := branchPath & mask
-				nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+			next := nd.next[branchPath]
+			if next == nil {
+				return nil
+
+			} else {
+				for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+					zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+					mask := 0b01<<(zd+1) - 1
+					bp := branchPath & mask
+					nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+				}
+				return next.searchKey(key, chop, nodeKeys)
 			}
-			return next.searchKey(key, chop, nodeKeys)
 		}
 
 	} else {
