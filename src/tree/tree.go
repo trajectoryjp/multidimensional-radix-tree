@@ -38,7 +38,7 @@ func (tr *Tree) Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value any) {
 func (tr *Tree) IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
-	indexsArray := tr.top.searchKey(key, true, false, nodeKeys)
+	indexsArray := tr.top.searchKey(key, true, true, nodeKeys)
 	return len(indexsArray) > 0
 }
 

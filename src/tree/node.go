@@ -65,7 +65,7 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 }
 
 // chop：値があれば（nilでなければ）探索を打ち切る。発見した値を返す。
-// pileup：chop=falseにおいて、探索した発見した値を返す。falseの場合はこのnodeの値は返さない。
+// pileup：pileup=falseでindexsの親の値は返さない。indexsの子は探索しない。
 func (nd *Node) searchKey(key *KeyInfo, chop, pileup bool, nodeKeys Indexs) Records { // #8636
 
 	if nd.value != nil {
