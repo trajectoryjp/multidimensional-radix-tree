@@ -64,11 +64,14 @@ func (nd *Node) append(key *KeyInfo, value interface{}) {
 	}
 }
 
-func (nd *Node) searchKey(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
+// chop：値があれば（nilでなければ）探索を打ち切る。発見した値を返す。
+// pileup：pileup=falseでindexsの親の値は返さない。indexsの子は探索しない。
+func (nd *Node) searchKey(key *KeyInfo, chop, pileup bool, nodeKeys Indexs) Records { // #8636
 
 	if nd.value != nil {
 
 		record := &Record{
+			zoom:   nd.zoomSetLevel, // ＃8633
 			indexs: nodeKeys,
 			value:  nd.value,
 		}
@@ -77,51 +80,76 @@ func (nd *Node) searchKey(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
 			return Records{record}
 
 		} else {
-			r := nd.searchPrefixToChild(key, chop, nodeKeys)
-			return append(r, record)
+			r := nd.searchPrefixToChild(key, chop, pileup, nodeKeys)
+
+			//#8637
+			if pileup {
+				return append(r, record)
+
+			} else {
+				if key.ZoomSetLevel == nd.zoomSetLevel {
+					// 指定されたindexsと一致するnd
+					return Records{record}
+
+				} else {
+					return r
+				}
+			}
 		}
 
 	} else {
-		return nd.searchPrefixToChild(key, chop, nodeKeys)
+		return nd.searchPrefixToChild(key, chop, pileup, nodeKeys)
 	}
 
 }
 
-func (nd *Node) searchPrefixToChild(key *KeyInfo, chop bool, nodeKeys Indexs) Records {
+func (nd *Node) searchPrefixToChild(key *KeyInfo, chop, pileup bool, nodeKeys Indexs) Records {
 
 	if key.ZoomSetLevel > nd.zoomSetLevel {
 		branchPath := key.BranchPath(nd.zoomSetLevel)
-		next := nd.next[branchPath]
-		if next == nil {
+		if len(nd.next) == 0 { //#8624
 			return nil
 
 		} else {
-			for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
-				zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
-				mask := 0b01<<(zd+1) - 1
-				bp := branchPath & mask
-				nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
-			}
-			return next.searchKey(key, chop, nodeKeys)
-		}
+			next := nd.next[branchPath]
+			if next == nil {
+				return nil
 
-	} else {
-		// keyとndは同じZoomSetLevel、もしくはndが大きい（子）のZoomSetLevel
-		records := make(Records, 0)
-		for branchPath, next := range nd.next {
-			if next != nil {
+			} else {
 				for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
 					zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
 					mask := 0b01<<(zd+1) - 1
 					bp := branchPath & mask
 					nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
 				}
-				if r := next.searchKey(key, chop, nodeKeys); len(r) > 0 {
-					records = append(records, r...)
-				}
+				return next.searchKey(key, chop, pileup, nodeKeys)
 			}
-
 		}
-		return records
+
+	} else {
+		// keyとndは同じZoomSetLevel、もしくはndが大きい（子）のZoomSetLevel
+		if pileup {
+			records := make(Records, 0)
+			for branchPath, next := range nd.next {
+				if next != nil {
+					for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+						zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+						mask := 0b01<<(zd+1) - 1
+						bp := branchPath & mask
+						nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+					}
+					if r := next.searchKey(key, chop, true, nodeKeys); len(r) > 0 {
+						records = append(records, r...)
+					}
+				}
+
+			}
+			return records
+
+		} else {
+			// pileup=falseでは指定されたzoomレベルよりも深くまでは探索しない
+			// (指定したindexsの値のみを得ることを目的としているため)
+			return nil
+		}
 	}
 }
