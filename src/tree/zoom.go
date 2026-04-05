@@ -37,7 +37,7 @@ type ZoomDiffSet []ZoomLevel    // 次元数分要素。0の要素は、1のズ�
 type ZoomSetTable []ZoomDiffSet // keyはzoomSetLevel
 
 // zoomSetLevelとzoomSetLevel+1のズームレベル差（2の冪数）
-func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel ZoomSetLevel, dim int) (diff ZoomLevel) {
+func (zt ZoomSetTable) GetZoomDiffDim(zoomSetLevel ZoomSetLevel, dim int) (diff ZoomLevel) {
 	if zt == nil {
 		return 1
 
@@ -54,12 +54,26 @@ func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel ZoomSetLevel, dim int) (diff Zoo
 	}
 }
 
+func (zt ZoomSetTable) GetZoomDiff(zoomSetLevel ZoomSetLevel) (diff ZoomDiffSet) {
+	if int(zoomSetLevel) >= len(zt) {
+		if len(zt) > 0 {
+			return zoomDiffSetUnit(len(zt[0]))
+
+		} else {
+			return nil
+		}
+
+	} else {
+		return zt[zoomSetLevel]
+	}
+}
+
 // zoomSetLevelのズームレベル（2の冪数）
 // zoomSetLevel=0はズームレベル0
 // バイナリツリーの場合、zoomSetLevel=1はズームレベル1
 func (zt ZoomSetTable) GetZoom(zoomSetLevel ZoomSetLevel, dim int) (zoom ZoomLevel) {
 	for k := ZoomSetLevel(0); k < zoomSetLevel; k++ {
-		zoom += zt.GetZoomDiff(k, dim)
+		zoom += zt.GetZoomDiffDim(k, dim)
 	}
 	return zoom
 }

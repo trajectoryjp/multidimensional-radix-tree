@@ -25,34 +25,39 @@ func TestOneDimBinary(t *testing.T) {
 	id101 := tr.Indexs{0b101}
 	tree.Append(id101, 3, "0b101")
 
+	// 0* - 00* - 001*
+	//    - 01            <-- 0に値ありなのでoverlapする（target0）
+	// 1  - 10  - 101*
+	//    - 11            <-- 1に値なしなのでoverlapしない（target3)
+
 	// 検索
 	target0 := tr.Indexs{0b01}
-	if !tree.IsOverlap(target0, 2) {
+	if !tree.IsOverlap(target0, 2) { // overlapする
 		t.Error("target0")
 	}
 
 	target1 := tr.Indexs{0b001}
-	if !tree.IsOverlap(target1, 3) {
+	if !tree.IsOverlap(target1, 3) { // overlapする
 		t.Error("target1")
 	}
 
 	target2 := tr.Indexs{0b00}
-	if !tree.IsOverlap(target2, 2) {
+	if !tree.IsOverlap(target2, 2) { // overlapする
 		t.Error("target2")
 	}
 
 	target3 := tr.Indexs{0b11}
-	if tree.IsOverlap(target3, 2) {
+	if tree.IsOverlap(target3, 2) { // overlapしない
 		t.Error("target3")
 	}
 
 	target4 := tr.Indexs{0b1}
-	if !tree.IsOverlap(target4, 1) {
+	if !tree.IsOverlap(target4, 1) { // overlapする
 		t.Error("target4")
 	}
 
-	target5 := tr.Indexs{0b11} // 不正データ（2ビット目は無視される）
-	if !tree.IsOverlap(target5, 1) {
+	target5 := tr.Indexs{0b11}       // 不正データ（2ビット目は無視される）
+	if !tree.IsOverlap(target5, 1) { // overlapする
 		t.Error("target5")
 	}
 

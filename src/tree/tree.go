@@ -10,6 +10,7 @@ type TreeInterface interface {
 	Append(indexs Indexs, zoomSetLevel ZoomSetLevel, value interface{})
 	IsOverlap(indexs Indexs, zoomSetLevel ZoomSetLevel) bool
 	GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) Records // indexsに一致するnodeの値を返す。indexsの親や子の値は返さない。
+	GetAll(size int, page Page) (records Records, nextPage Page)
 }
 
 type Tree struct {
@@ -46,6 +47,12 @@ func (tr *Tree) GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) Records {
 	key := CreateKeyInfo(tr.zoomSetTable, indexs, zoomSetLevel, tr.zoomSetOddTable)
 	nodeKeys := make(Indexs, len(indexs))
 	return tr.top.searchKey(key, false, true, nodeKeys)
+}
+
+func (tr *Tree) GetAll(size int, page Page) (records Records, nextPage Page) {
+	dim := len(tr.zoomSetTable[0])
+	indexs := make(Indexs, dim)
+	return tr.top.GetAll(indexs, tr.zoomSetTable, size, page)
 }
 
 // ----------------

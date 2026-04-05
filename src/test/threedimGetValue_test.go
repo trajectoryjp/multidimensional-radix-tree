@@ -49,7 +49,7 @@ func checkValue(t *testing.T, tree tr.TreeInterface, indexs tr.Indexs, zoom tr.Z
 		match := false
 	next:
 		for _, vv := range records {
-			rIndexs, rValue := vv.Get()
+			rIndexs, _, rValue := vv.Get()
 			for k, id := range indexs {
 				if rIndexs[k] != id {
 					t.Errorf("unmatch index. [%d] indexs=%v zoom=%v values=%v", k, indexs, zoom, values)

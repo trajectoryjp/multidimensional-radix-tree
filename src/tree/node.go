@@ -116,12 +116,15 @@ func (nd *Node) searchPrefixToChild(key *KeyInfo, chop, pileup bool, nodeKeys In
 				return nil
 
 			} else {
-				for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
-					zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
-					mask := 0b01<<(zd+1) - 1
-					bp := branchPath & mask
-					nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
-				}
+				/*
+					for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+						zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+						mask := 0b01<<(zd+1) - 1
+						bp := branchPath & mask
+						nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+					}
+				*/
+				nodeKeys = nd.ConvertBranchToIndexs(branchPath, nodeKeys, key.zoomSetTable)
 				return next.searchKey(key, chop, pileup, nodeKeys)
 			}
 		}
@@ -132,12 +135,15 @@ func (nd *Node) searchPrefixToChild(key *KeyInfo, chop, pileup bool, nodeKeys In
 			records := make(Records, 0)
 			for branchPath, next := range nd.next {
 				if next != nil {
-					for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
-						zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
-						mask := 0b01<<(zd+1) - 1
-						bp := branchPath & mask
-						nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
-					}
+					/*
+						for dim := len(nodeKeys) - 1; dim >= 0; dim-- {
+							zd := key.zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+							mask := 0b01<<(zd+1) - 1
+							bp := branchPath & mask
+							nodeKeys[dim] = nodeKeys[dim]<<zd | int64(bp)
+						}
+					*/
+					nodeKeys = nd.ConvertBranchToIndexs(branchPath, nodeKeys, key.zoomSetTable)
 					if r := next.searchKey(key, chop, true, nodeKeys); len(r) > 0 {
 						records = append(records, r...)
 					}
@@ -152,4 +158,77 @@ func (nd *Node) searchPrefixToChild(key *KeyInfo, chop, pileup bool, nodeKeys In
 			return nil
 		}
 	}
+}
+
+type Page []int
+
+func (nd *Node) GetAll(myIndexs Indexs, zoomSetTable ZoomSetTable, reamainSize int, startPage Page) (records Records, nextPage Page) {
+
+	records = make(Records, 0)
+	if nd.value != nil && len(startPage) == 0 {
+
+		record := &Record{
+			zoom:   nd.zoomSetLevel, // ＃8633
+			indexs: myIndexs,
+			value:  nd.value,
+		}
+		records = append(records, record)
+		reamainSize--
+
+		if reamainSize <= 0 { // 負の場合は想定外
+			// 打ち切り
+			return records, Page{0}
+		}
+	}
+
+	startBranchNum := 0
+	if len(startPage) > 0 {
+		startBranchNum = startPage[0]
+
+		if len(startPage) == 1 {
+			startPage = nil
+		} else {
+			startPage = startPage[1:]
+		}
+	}
+
+	for branchPath := startBranchNum; branchPath < len(nd.next); branchPath++ {
+		//for branchPath, next := range nd.next {
+		next := nd.next[branchPath]
+		if next != nil {
+			childIndexs := nd.ConvertBranchToIndexs(branchPath, myIndexs, zoomSetTable)
+			if r, nextPage := next.GetAll(childIndexs, zoomSetTable, reamainSize, startPage); len(r) > 0 {
+				records = append(records, r...)
+				if reamainSize -= len(r); reamainSize <= 0 {
+					// 指定量に到達。打ち切り
+					return records, append(Page{branchPath}, nextPage...)
+				}
+			}
+			startPage = nil
+		}
+	}
+
+	return records, nil
+}
+
+// myIndexsをbranchPathに対応する子のIndexsに変換する
+func (nd *Node) ConvertBranchToIndexs(branchPath int, myIndexs Indexs, zoomSetTable ZoomSetTable) (childIndexs Indexs) {
+	//return convertBranchPathToIndexs(myIndexs, zoomSetTable[nd.zoomSetLevel], branchPath)
+	if len(zoomSetTable) > 0 {
+		return convertBranchPathToIndexs(myIndexs, zoomSetTable.GetZoomDiff(nd.zoomSetLevel), branchPath)
+
+	} else {
+		return convertBranchPathToIndexs(myIndexs, zoomDiffSetUnit(len(myIndexs)), branchPath)
+	}
+	/*
+		childIndexs = make(Indexs, len(myIndexs))
+		for dim := len(myIndexs) - 1; dim >= 0; dim-- {
+			zd := zoomSetTable.GetZoomDiff(nd.zoomSetLevel, dim)
+			mask := 0b01<<(zd+1) - 1
+			bp := branchPath & mask
+			childIndexs[dim] = myIndexs[dim]<<zd | int64(bp)
+			branchPath = branchPath >> zd
+		}
+		return childIndexs
+	*/
 }

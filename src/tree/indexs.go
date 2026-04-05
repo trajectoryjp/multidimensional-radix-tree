@@ -7,6 +7,19 @@ import (
 
 type Indexs []int64
 
+func (id Indexs) Equal(t Indexs) bool {
+	if len(id) != len(t) {
+		return false
+	}
+
+	for k, v := range id {
+		if v != t[k] {
+			return false
+		}
+	}
+	return true
+}
+
 //----------------
 // for debug mode
 //----------------
@@ -41,8 +54,37 @@ type Record struct {
 	value  any
 }
 
+func CreateRecord(indexs Indexs, zoom ZoomSetLevel, value any) *Record {
+	return &Record{
+		zoom:   zoom,
+		indexs: indexs,
+		value:  value,
+	}
+}
+
 type Records []*Record
 
-func (r *Record) Get() (Indexs, any) {
-	return r.indexs, r.value
+func (r *Record) Get() (Indexs, ZoomSetLevel, any) {
+	return r.indexs, r.zoom, r.value
+}
+
+func (rs Records) Equal(t Records, equalValue func(a, b any) bool) bool {
+	if len(rs) != len(t) {
+		return false
+	}
+
+	for _, v := range rs {
+		match := false
+	insideLoop:
+		for _, vv := range t {
+			if v.zoom == vv.zoom && v.indexs.Equal(vv.indexs) && equalValue(v.value, vv.value) {
+				match = true
+				break insideLoop
+			}
+		}
+		if !match {
+			return false
+		}
+	}
+	return true
 }
