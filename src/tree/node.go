@@ -1,5 +1,7 @@
 package tree
 
+import "math"
+
 type Node struct {
 	zoomSetLevel ZoomSetLevel
 	next         []*Node
@@ -158,6 +160,91 @@ func (nd *Node) searchPrefixToChild(key *KeyInfo, chop, pileup bool, nodeKeys In
 			return nil
 		}
 	}
+}
+
+// keyのnodeまで下りながら親の値をparentModeに従って集め、keyのnodeではchildModeに従って値を集める
+func (nd *Node) getValuesEx(key *KeyInfo, childMode ChildMode, parentMode ParentMode) Records {
+	records := make(Records, 0)
+	node := nd
+	nodeKeys := make(Indexs, key.dimension)
+
+	for node.zoomSetLevel < key.ZoomSetLevel {
+		if node.value != nil && parentMode != ParentNone {
+			record := &Record{
+				zoom:   node.zoomSetLevel,
+				indexs: nodeKeys,
+				value:  node.value,
+			}
+			if parentMode == ParentLargest {
+				// 上から下りているので最初に見つかった親がもっとも大きい
+				return Records{record}
+			}
+			records = append(records, record)
+		}
+
+		branchPath := key.BranchPath(node.zoomSetLevel)
+		if len(node.next) == 0 || node.next[branchPath] == nil {
+			// keyのnodeは存在しない
+			return records
+		}
+		nodeKeys = node.ConvertBranchToIndexs(branchPath, nodeKeys, key.zoomSetTable)
+		node = node.next[branchPath]
+	}
+
+	return append(records, node.getChildValues(nodeKeys, key.zoomSetTable, childMode)...)
+}
+
+// ndの値と子孫の値をchildModeに従って返す
+func (nd *Node) getChildValues(myIndexs Indexs, zoomSetTable ZoomSetTable, childMode ChildMode) Records {
+	switch childMode {
+	case ChildAll:
+		records, _ := nd.GetAll(myIndexs, zoomSetTable, math.MaxInt, nil)
+		return records
+
+	case ChildCover:
+		if nd.value == nil || nd.isCoveredByDescendants() {
+			return nd.getDescendantValues(myIndexs, zoomSetTable)
+		}
+	}
+
+	if nd.value == nil {
+		return Records{}
+	}
+	return Records{{
+		zoom:   nd.zoomSetLevel,
+		indexs: myIndexs,
+		value:  nd.value,
+	}}
+}
+
+// ndの値を含まない、すべての子孫の値を返す
+func (nd *Node) getDescendantValues(myIndexs Indexs, zoomSetTable ZoomSetTable) Records {
+	records := make(Records, 0)
+	for branchPath, next := range nd.next {
+		if next != nil {
+			childIndexs := nd.ConvertBranchToIndexs(branchPath, myIndexs, zoomSetTable)
+			r, _ := next.GetAll(childIndexs, zoomSetTable, math.MaxInt, nil)
+			records = append(records, r...)
+		}
+	}
+	return records
+}
+
+// ndの全域が子孫の値で隙間なく覆われているか（nd自身の値は含めない）
+// すべての分岐が「値を持つnode」か「全域が子孫の値で覆われているnode」であれば覆われている
+func (nd *Node) isCoveredByDescendants() bool {
+	if len(nd.next) == 0 {
+		return false
+	}
+	for _, next := range nd.next {
+		if next == nil {
+			return false
+		}
+		if next.value == nil && !next.isCoveredByDescendants() {
+			return false
+		}
+	}
+	return true
 }
 
 type Page []int

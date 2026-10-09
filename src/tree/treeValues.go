@@ -51,3 +51,21 @@ func (tr *TreeValues) GetValues(indexs Indexs, zoomSetLevel ZoomSetLevel) (recor
 	}
 	return records
 }
+
+func (tr *TreeValues) GetValuesEx(indexs Indexs, zoomSetLevel ZoomSetLevel, childMode ChildMode, parentMode ParentMode) (records Records) {
+	rs := tr.Tree.GetValuesEx(indexs, zoomSetLevel, childMode, parentMode)
+
+	records = make(Records, 0)
+	for _, r := range rs {
+		values := r.value.([]any)
+		for _, v := range values {
+			rec := &Record{
+				zoom:   r.zoom,
+				indexs: r.indexs,
+				value:  v,
+			}
+			records = append(records, rec)
+		}
+	}
+	return records
+}

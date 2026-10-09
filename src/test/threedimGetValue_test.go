@@ -65,3 +65,28 @@ func checkValue(t *testing.T, tree tr.TreeInterface, indexs tr.Indexs, zoom tr.Z
 		}
 	}
 }
+
+// Tree.GetValues
+// indexsに一致するnodeの値のみを返し、親や子の値は返さない
+func TestTrheeDimTreeGetValue(t *testing.T) {
+
+	table := tr.ZoomSetTable{
+		tr.ZoomDiffSet{4, 4, 2},
+		tr.ZoomDiffSet{4, 4, 2},
+	}
+	tree := tr.CreateTree(table)
+
+	indexs1 := tr.Indexs{15, 15, 3}
+	indexs2 := tr.Indexs{250, 250, 15} // indexs1の子
+	indexs3 := tr.Indexs{0, 0, 1}
+
+	tree.Append(indexs1, 1, "1-1")
+	tree.Append(indexs2, 2, "2-1")
+	tree.Append(indexs3, 2, "2-3")
+
+	// 比較
+	checkValue(t, tree, indexs1, 1, []string{"1-1"}) // 子(2-1)は返さない
+	checkValue(t, tree, indexs2, 2, []string{"2-1"}) // 親(1-1)は返さない
+	checkValue(t, tree, indexs3, 2, []string{"2-3"})
+	checkValue(t, tree, tr.Indexs{0, 0, 0}, 1, []string{}) // 値のないnode
+}
